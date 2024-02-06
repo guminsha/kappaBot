@@ -1,8 +1,5 @@
-import re
+import openpyxl
 
-string = "100d100"
-pattern = re.compile("[1-100]d[1-100]")
-if(pattern.search(string)):
-	teste = string.split("d")
+workbook_pokemons = openpyxl.load_workbook("src/assets/pokemons.xlsx")["Planilha1"]
 
-print(teste)
+print(workbook_pokemons[3][0].value)
