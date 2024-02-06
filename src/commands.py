@@ -63,11 +63,17 @@ async def rd(interaction: discord.Interaction, dice: str):
 
 # Excel pokemon command
 workbook_pokemons = openpyxl.load_workbook("src/assets/pokemons.xlsx")["Planilha1"]
+number_of_rows = 1
+
+for row in workbook_pokemons.iter_rows(min_row=2):
+    number_of_rows += 1
+
+print(number_of_rows)
 
 @bot.tree.command(name="pokemon", description="Escolhe um pokemon aleatório para você")
 async def hello(interaction: discord.Interaction):
-    pokemon_choice = randint(2, 154)
-    await interaction.response.send_message(f"Você é o: {workbook_pokemons[pokemon_choice][0].value}\nTipo: {workbook_pokemons[pokemon_choice][1].value}\n{workbook_pokemons[pokemon_choice][2].value}")
+    pokemon_choice = randint(2, number_of_rows)
+    await interaction.response.send_message(f"Nº: {workbook_pokemons[pokemon_choice][0].value}\nNome: {workbook_pokemons[pokemon_choice][1].value}\nTipo: {workbook_pokemons[pokemon_choice][2].value}\n{workbook_pokemons[pokemon_choice][3].value}")
 
 # @bot.command()
 # async def oi(ctx):
