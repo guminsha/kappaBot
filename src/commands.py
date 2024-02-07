@@ -3,6 +3,7 @@ from discord.ext import commands
 from random import randint
 import re
 import openpyxl
+from tenor import get_gif_pokemon
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -10,7 +11,6 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 # Sync bot commands with discord
-
 
 @bot.event
 async def on_ready():
@@ -24,7 +24,6 @@ async def on_ready():
 
 # "oi" command to make bot say hi back to who used the command
 
-
 @bot.tree.command(name="oi", description="Bot te diz oi de volta")
 async def hello(interaction: discord.Interaction):
     # ephemeral=True)
@@ -32,17 +31,15 @@ async def hello(interaction: discord.Interaction):
 
 # Make bot say something specific
 
-
 @bot.tree.command(name="diga", description="Bot diz algo específico")
 async def hello(interaction: discord.Interaction, thing_to_say: str):
     await interaction.response.send_message(f"{interaction.user.mention} disse: {thing_to_say}!")
 
 # Roll dice command using regex
 
-
 @bot.tree.command(name="rd", description="Rola um dado de 20 lados")
 async def rd(interaction: discord.Interaction, dice: str):
-    pattern = re.compile("([1-9][0-9]?|100)d([1-9][0-9]?|100)")
+    pattern = re.compile("\\b([1-9][0-9]?|100)d([1-9][0-9]?|100)\\b")
     print(dice)
     print(pattern.search(dice))
     if (pattern.search(dice)):
@@ -59,21 +56,26 @@ async def rd(interaction: discord.Interaction, dice: str):
 
         await interaction.response.send_message(f"Você rolou {dice_quantity}d{dice_type}: {result_dices}\nTotal:({total_value_dices})")
     else:
-        await interaction.response.send_message(f"Invalido")
+        await interaction.response.send_message(f"Você digitou algo errado, tente algo como \"2d20\" (2 dados de 20 lados) sem aspas\nLembre-se de utilizar apenas valores entre 1 e 100", ephemeral=True)
 
 # Excel pokemon command
+
 workbook_pokemons = openpyxl.load_workbook("src/assets/pokemons.xlsx")["Planilha1"]
 number_of_rows = 1
 
 for row in workbook_pokemons.iter_rows(min_row=2):
     number_of_rows += 1
 
-print(number_of_rows)
-
 @bot.tree.command(name="pokemon", description="Escolhe um pokemon aleatório para você")
-async def hello(interaction: discord.Interaction):
+async def pokemon(interaction: discord.Interaction):
     pokemon_choice = randint(2, number_of_rows)
-    await interaction.response.send_message(f"Nº: {workbook_pokemons[pokemon_choice][0].value}\nNome: {workbook_pokemons[pokemon_choice][1].value}\nTipo: {workbook_pokemons[pokemon_choice][2].value}\n{workbook_pokemons[pokemon_choice][3].value}")
+    pokemon_number = workbook_pokemons[pokemon_choice][0].value
+    pokemon_gen = workbook_pokemons[pokemon_choice][1].value
+    pokemon_name = workbook_pokemons[pokemon_choice][2].value
+    pokemon_type = workbook_pokemons[pokemon_choice][3].value
+    pokemon_info = workbook_pokemons[pokemon_choice][4].value
+    await interaction.response.send_message(f"Nº: {pokemon_number} - {pokemon_gen}ª geração\nNome: {pokemon_name}\nTipo: {pokemon_type}\n{pokemon_info}\n{get_gif_pokemon(pokemon_name)}")
+    
 
 # @bot.command()
 # async def oi(ctx):
