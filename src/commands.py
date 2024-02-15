@@ -4,6 +4,7 @@ from random import randint
 import re
 import openpyxl
 from tenor import get_gif_pokemon
+from weather import get_weather
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -74,8 +75,27 @@ async def pokemon(interaction: discord.Interaction):
     pokemon_name = workbook_pokemons[pokemon_choice][2].value
     pokemon_type = workbook_pokemons[pokemon_choice][3].value
     pokemon_info = workbook_pokemons[pokemon_choice][4].value
-    await interaction.response.send_message(f"Nº: {pokemon_number} - {pokemon_gen}ª geração\nNome: {pokemon_name}\nTipo: {pokemon_type}\n{pokemon_info}\n{get_gif_pokemon(pokemon_name)}")
     
+    await interaction.response.send_message(f"Nº: {pokemon_number} - {pokemon_gen}ª geração\n"
+                                            f"Nome: {pokemon_name}\n"
+                                            f"Tipo: {pokemon_type}\n"
+                                            f"{pokemon_info}\n"
+                                            f"{get_gif_pokemon(pokemon_name)}")
+    
+@bot.tree.command(name="tempo", description="Bot mostra previsão do tempo do local solicitado")
+async def weather(interaction: discord.Interaction, city: str):
+    weather = get_weather(city)
+    location = weather["name"]
+    description = weather["weather"][0]["description"].capitalize()
+    minimum_temperature = weather["main"]["temp_min"]
+    maximum_temperature = weather["main"]["temp_max"]
+    feels_like = weather["main"]["feels_like"]
+
+    await interaction.response.send_message(f"Previsão do tempo para {location}\n"
+                                            f"Descrição: {description}\n"
+                                            f"Temperatura minima: {minimum_temperature}ºC\n"
+                                            f"Temperatura máxima: {maximum_temperature}ºC\n"
+                                            f"Sensação térmica: {feels_like}ºC")
 
 # @bot.command()
 # async def oi(ctx):
