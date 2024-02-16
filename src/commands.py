@@ -75,13 +75,21 @@ async def pokemon(interaction: discord.Interaction):
     pokemon_name = workbook_pokemons[pokemon_choice][2].value
     pokemon_type = workbook_pokemons[pokemon_choice][3].value
     pokemon_info = workbook_pokemons[pokemon_choice][4].value
-    
-    await interaction.response.send_message(f"Nº: {pokemon_number} - {pokemon_gen}ª geração\n"
-                                            f"Nome: {pokemon_name}\n"
-                                            f"Tipo: {pokemon_type}\n"
-                                            f"{pokemon_info}\n"
-                                            f"{get_gif_pokemon(pokemon_name)}")
-    
+    pokemon_gif = get_gif_pokemon(pokemon_name)
+
+    embed = discord.Embed()
+    embed.set_image(url=pokemon_gif)
+    embed.set_thumbnail(url=f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_number.lstrip('0')}.png")
+    embed.add_field(name="**Nome**:", value=pokemon_name)
+    embed.add_field(name="**Nº**:", value=pokemon_number)
+    embed.add_field(name="**Geração**:", value=f"{pokemon_gen}ª")
+    embed.add_field(name="**Tipo**:", value=pokemon_type)
+    embed.add_field(name="**Descrição**:", value=pokemon_info)
+
+    await interaction.response.send_message(embed=embed)
+
+# Weather bot command    
+
 @bot.tree.command(name="tempo", description="Bot mostra previsão do tempo do local solicitado")
 async def weather(interaction: discord.Interaction, city: str):
     weather = get_weather(city)
@@ -91,12 +99,10 @@ async def weather(interaction: discord.Interaction, city: str):
     maximum_temperature = weather["main"]["temp_max"]
     feels_like = weather["main"]["feels_like"]
 
-    await interaction.response.send_message(f"Previsão do tempo para {location}\n"
-                                            f"Descrição: {description}\n"
-                                            f"Temperatura minima: {minimum_temperature}ºC\n"
-                                            f"Temperatura máxima: {maximum_temperature}ºC\n"
-                                            f"Sensação térmica: {feels_like}ºC")
+    await interaction.response.send_message(f"**Previsão do tempo para *{location}***\n"
+                                            f"**Descrição**: {description}\n"
+                                            f"**Temperatura minima**: {minimum_temperature}ºC\n"
+                                            f"**Temperatura máxima**: {maximum_temperature}ºC\n"
+                                            f"**Sensação térmica**: {feels_like}ºC")
 
-# @bot.command()
-# async def oi(ctx):
-#     await ctx.send(f"Oi, {ctx.message.author.mention}")
+
