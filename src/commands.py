@@ -5,6 +5,9 @@ import re
 import openpyxl
 from tenor import get_gif_pokemon
 from weather import get_weather
+from pytube import YouTube
+import asyncio
+import utils.utils as utils
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -105,4 +108,48 @@ async def weather(interaction: discord.Interaction, city: str):
                                             f"**Temperatura máxima**: {maximum_temperature}ºC\n"
                                             f"**Sensação térmica**: {feels_like}ºC")
 
+# Music command
 
+music_queue = []
+
+@bot.tree.command(name="music", description="Music")
+async def music(interaction: discord.Interaction, url: str):
+    if not discord.utils.get(bot.voice_clients, guild=interaction.guild):
+        channel = interaction.user.voice.channel
+        voice_client = await channel.connect()
+    else:
+        voice_client = channel
+
+    # Download youtube mp3 audio
+    yt = YouTube(url)
+    
+    if yt.length > 900:
+        await interaction.response.send_message("Música muito longa", delete_after=5)
+        return 0
+    
+    await interaction.response.send_message("playing", delete_after=1)
+
+    audio_stream = yt.streams.filter(only_audio=True).first()
+    audio_stream.download(filename="src/assets/audio.mp3")
+
+    # Reproduce the same audio
+    voice_client.play(discord.FFmpegPCMAudio("src/assets/audio.mp3"))
+
+    for time in range(yt.length + 1):
+        print(f"{time} >> {yt.length}")
+        await asyncio.sleep(1)
+        if not voice_client.is_playing():
+            utils.delete_music()
+            await voice_client.disconnect()
+            break
+
+@bot.tree.command(name="parar", description="Para a música atual")
+async def parar(interaction: discord.Interaction):
+    voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
+    if voice_client and voice_client.is_playing():
+        voice_client.stop()
+        await interaction.response.send_message("Música parada", delete_after=3)
+        utils.delete_music()
+        await voice_client.disconnect()
+    else:
+        await interaction.response.send_message("Não há música tocando para parar", delete_after=3)
