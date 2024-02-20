@@ -1,5 +1,11 @@
-import openpyxl
+music_queue = ["url1", "url2", "url3"]
+print(music_queue)
 
-workbook_pokemons = openpyxl.load_workbook("src/assets/pokemons.xlsx")["Planilha1"]
+for i in music_queue:
+	music_queue.pop(0)
+	print(music_queue)
 
-print(workbook_pokemons[3][0].value)
+if not music_queue:
+	print("não tem")
+else:
+	print("tem elementos")
