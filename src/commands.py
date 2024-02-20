@@ -10,16 +10,15 @@ import asyncio
 import utils.utils as utils
 from datetime import datetime
 
-intents = discord.Intents.default()
-intents.message_content = True
-
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="!",
+                   intents=discord.Intents.all(),
+                   status=discord.Status.idle)
 
 # Sync bot commands with discord
 
 @bot.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(bot))
+    print(f"We have logged in as {bot.user}")
 
     try:
         synced = await bot.tree.sync()
@@ -144,6 +143,7 @@ async def weather(interaction: discord.Interaction, city: str):
 # Music command
 
 music_queue = []
+musics_titles = []
 
 @bot.tree.command(name="tocar", description="Bot toca o áudio de uma url do youtube")
 async def play(interaction: discord.Interaction, url: str):
@@ -161,6 +161,8 @@ async def play(interaction: discord.Interaction, url: str):
         return 0
     
     await interaction.response.send_message(f"Música {yt.title} adicionada a fila", delete_after=20)
+    
+    musics_titles.append(yt.title)
 
     clean_title = datetime.now().microsecond
 
@@ -174,25 +176,32 @@ async def play(interaction: discord.Interaction, url: str):
     # Start playing the queue
     if not voice_client.is_playing():
         voice_client.play(discord.FFmpegPCMAudio(f"src/assets/audios/{music_queue[0]}.mp3"))
-
+        
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{musics_titles[0]}"))
+        
         while music_queue:
             await asyncio.sleep(3)
             if not voice_client.is_playing() and not voice_client.is_paused() and voice_client.is_connected():
                 utils.delete_music(music_queue[0])
                 music_queue.pop(0)
+                musics_titles.pop(0)
                 print(f"current music queue: {music_queue}")
+                if not music_queue:
+                    break
                 voice_client.play(discord.FFmpegPCMAudio(f"src/assets/audios/{music_queue[0]}.mp3"))
-
+                await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{musics_titles[0]}"))
+        
+        await bot.change_presence(status=discord.Status.idle, activity=None)
         await voice_client.disconnect()
 
 @bot.tree.command(name="parar", description="Para de tocar")
 async def stop(interaction: discord.Interaction):
     voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if voice_client and voice_client.is_playing():
-        print(voice_client)
         await voice_client.disconnect()
         utils.delete_queue(music_queue)
         music_queue.clear()
+        await bot.change_presence(status=discord.Status.idle, activity=None)
         await interaction.response.send_message("Parando de tocar", delete_after=3)
     else:
         await interaction.response.send_message("Não há música tocando para parar", delete_after=3)
