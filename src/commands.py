@@ -82,14 +82,17 @@ async def pokemon(interaction: discord.Interaction):
     pokemon_sprite = workbook_pokemons[pokemon_choice][5].value
     pokemon_gif = get_gif_pokemon(pokemon_name)
 
-    embed = discord.Embed()
+    embed = discord.Embed(title="Pokemon")
+    embed.set_author(name=f"Pokemon do {interaction.user.name}", icon_url=interaction.user.avatar)
     embed.set_image(url=pokemon_gif)
     embed.set_thumbnail(url=f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_sprite}.png")
     embed.add_field(name="**Nome**:", value=pokemon_name)
     embed.add_field(name="**Nº**:", value=pokemon_number)
     embed.add_field(name="**Geração**:", value=f"{pokemon_gen}ª")
     embed.add_field(name="**Tipo**:", value=pokemon_type)
-    embed.add_field(name="**Descrição**:", value=pokemon_info)
+    embed.add_field(name="**Descrição**:", value=pokemon_info, inline=False)
+    if pokemon_number == "0376":
+        embed.add_field(name="**Vale a pena trocar metagross male por?**", value="Ah, já troquei")
 
     await interaction.response.send_message(embed=embed)
 
@@ -109,17 +112,21 @@ async def find_pokemon(interaction: discord.Interaction, pokemon: str):
                 pokemon_gif = get_gif_pokemon(pokemon_name)
                 break
         
-        embed = discord.Embed()
+        embed = discord.Embed(title="Pokemon")
+        embed.set_author(name=f"Pokemon do {interaction.user.name}", icon_url=interaction.user.avatar)
         embed.set_image(url=pokemon_gif)
         embed.set_thumbnail(url=f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_sprite}.png")
         embed.add_field(name="**Nome**:", value=pokemon_name)
         embed.add_field(name="**Nº**:", value=pokemon_number)
         embed.add_field(name="**Geração**:", value=f"{pokemon_gen}ª")
         embed.add_field(name="**Tipo**:", value=pokemon_type)
-        embed.add_field(name="**Descrição**:", value=pokemon_info)
+        embed.add_field(name="**Descrição**:", value=pokemon_info, inline=False)
+        if pokemon_number == "0376":
+            embed.add_field(name="**Vale a pena trocar metagross male por?**", value="Ah, já troquei")
         
         await interaction.response.send_message(embed=embed)
-    except:
+    except Exception as e:
+        print(e)
         await interaction.response.send_message("Não achei seu pokemon, tente novamente", delete_after=15)
 
 
@@ -127,18 +134,27 @@ async def find_pokemon(interaction: discord.Interaction, pokemon: str):
 
 @bot.tree.command(name="tempo", description="Bot mostra previsão do tempo do local solicitado")
 async def weather(interaction: discord.Interaction, city: str):
-    weather = get_weather(city)
-    location = weather["name"]
-    description = weather["weather"][0]["description"].capitalize()
-    minimum_temperature = weather["main"]["temp_min"]
-    maximum_temperature = weather["main"]["temp_max"]
-    feels_like = weather["main"]["feels_like"]
+    try:
+        weather = get_weather(city)
+        location = weather["name"]
+        description = weather["weather"][0]["description"].capitalize()
+        minimum_temperature = weather["main"]["temp_min"]
+        maximum_temperature = weather["main"]["temp_max"]
+        feels_like = weather["main"]["feels_like"]
+        icon = weather["weather"][0]["icon"]
 
-    await interaction.response.send_message(f"**Previsão do tempo para *{location}***\n"
-                                            f"**Descrição**: {description}\n"
-                                            f"**Temperatura minima**: {minimum_temperature}ºC\n"
-                                            f"**Temperatura máxima**: {maximum_temperature}ºC\n"
-                                            f"**Sensação térmica**: {feels_like}ºC")
+        embed = discord.Embed(title=f"Previsão do tempo para {location}")
+        embed.set_author(name=interaction.user.name, icon_url=interaction.user.avatar)
+        embed.set_thumbnail(url=f"https://openweathermap.org/img/wn/{icon}@2x.png")
+        embed.add_field(name="**Temperatura mínima:**", value=f"{minimum_temperature}ºC")
+        embed.add_field(name="**Temperatura máxima:**", value=f"{maximum_temperature}ºC")
+        embed.add_field(name="**Sensação térmica:**", value=f"{feels_like}ºC", inline=False)
+        embed.add_field(name="**Descrição:**", value=description, inline=False)
+
+        await interaction.response.send_message(embed=embed)
+    except Exception as e:
+        print(e)
+        await interaction.response.send_message("Não achei esta cidade, tente novamente", delete_after=15)
 
 # Music command
 
@@ -146,22 +162,28 @@ music_queue = []
 musics_titles = []
 
 @bot.tree.command(name="tocar", description="Bot toca o áudio de uma url do youtube")
-async def play(interaction: discord.Interaction, url: str):
+async def play(interaction: discord.Interaction, titulo_ou_url: str):
     if not discord.utils.get(bot.voice_clients, guild=interaction.guild):
         channel = interaction.user.voice.channel
         voice_client = await channel.connect(self_deaf=True)
     else:
         voice_client = discord.utils.get(bot.voice_clients)
+    
+    await interaction.response.defer()
+    
+    url = utils.get_video_url_by_title(titulo_ou_url)
 
     # Download youtube mp3 audio
     yt = YouTube(url)
     
     if yt.length > 900:
-        await interaction.response.send_message("Música muito longa", delete_after=5)
+        msg = await interaction.followup.send("Música muito longa")
         return 0
     
-    await interaction.response.send_message(f"Música {yt.title} adicionada a fila", delete_after=20)
+    msg = await interaction.followup.send(f"Música {yt.title} adicionada a fila")
     
+    asyncio.create_task(utils.delete_message(msg))
+
     musics_titles.append(yt.title)
 
     clean_title = datetime.now().microsecond
@@ -220,7 +242,7 @@ async def pause(interaction: discord.Interaction):
     voice_client = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if voice_client and voice_client.is_playing():
         voice_client.pause()
-        await interaction.response.send_message("Musica pausada", delete_after=30)
+        await interaction.response.send_message("Musica pausada", delete_after=20)
     else:
         await interaction.response.send_message("Não há música tocando para pausar", delete_after=3)
 

@@ -1,4 +1,6 @@
 import os
+import asyncio
+from youtubesearchpython import VideosSearch
 
 def delete_queue(queue):
 	for title in queue:
@@ -10,5 +12,17 @@ def delete_music(title):
 		print(f"Deleting {title}.mp3")
 		os.remove(path)
 
-# def play_music():
-# 	voice_client.play(discord.FFmpegPCMAudio(f"src/assets/audios/{music_queue[0]}.mp3"))
+def get_video_url_by_title(title):
+    videos_search = VideosSearch(title, limit = 1)
+    results = videos_search.result()['result']
+    if results:
+        return results[0]["link"]
+    else:
+        return None
+	
+async def delete_message(msg):
+	await asyncio.sleep(20)
+	await msg.delete()
+
+if __name__ == "__main__":
+	print(get_video_url_by_title("numb linkin park"))
