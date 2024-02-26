@@ -20,8 +20,8 @@ def get_video_url_by_title(title):
     else:
         return None
 	
-async def delete_message(msg):
-	await asyncio.sleep(20)
+async def delete_message(msg, time):
+	await asyncio.sleep(time)
 	await msg.delete()
 
 if __name__ == "__main__":

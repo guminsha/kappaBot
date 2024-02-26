@@ -39,6 +39,20 @@ async def hello(interaction: discord.Interaction):
 async def hello(interaction: discord.Interaction, o_que_falar: str):
     await interaction.response.send_message(f"{o_que_falar}!")
 
+# Delete x chat messages
+    
+@bot.tree.command(name="limpar_chat", description="Apaga um número específico de messagens")
+async def clean_chat(interaction: discord.Interaction, quantidade: int):
+    if interaction.user.guild_permissions.manage_messages and quantidade < 11:
+        await interaction.response.defer(ephemeral=True)
+        await interaction.channel.purge(limit=quantidade, check=lambda msg: msg != interaction.message)
+        msg = await interaction.followup.send(f"{quantidade} messagem(ns) foram apagadas")
+        asyncio.create_task(utils.delete_message(msg, 10))
+    else:
+        msg = await interaction.response.send_message("Você não tem permissão para apagar messagens neste canal ou você"
+                                                "tentou apagar mais de 10 messagens")
+        asyncio.create_task(utils.delete_message(msg, 10))
+
 # Roll dice command using regex
 
 @bot.tree.command(name="rd", description="Rola um dado de 20 lados")
@@ -178,11 +192,12 @@ async def play(interaction: discord.Interaction, titulo_ou_url: str):
     
     if yt.length > 900:
         msg = await interaction.followup.send("Música muito longa")
+        asyncio.create_task(utils.delete_message(msg, 5))
         return 0
     
     msg = await interaction.followup.send(f"Música {yt.title} adicionada a fila")
     
-    asyncio.create_task(utils.delete_message(msg))
+    asyncio.create_task(utils.delete_message(msg, 15))
 
     musics_titles.append(yt.title)
 
